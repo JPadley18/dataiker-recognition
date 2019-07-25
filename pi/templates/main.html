@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- META tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+		<title>FaceRecognition Monitor</title>
+		<!-- CSS Imports -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+		<!-- JS Imports -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" type="text/css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">  
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	</head>
+	<body>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script
+              src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+              integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+              crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>  
+        <script src="https://js.pusher.com/4.4/pusher.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pluralize/8.0.0/pluralize.min.js"></script>
+		<script>
+			$(document).ready(function(){
+				$.ajaxSetup({ cache: false });
+				setInterval(update, 1000);
+			});
+			
+			String.prototype.format = function () {
+			    var i = 0, args = arguments;
+			    return this.replace(/{}/g, function () {
+			        return typeof args[i] != 'undefined' ? args[i++] : '';
+			    });
+			};
+			String.prototype.capitalize = function(){
+				return this.charAt(0).toUpperCase() + this.slice(1);
+			};
+
+			function timeSince(time) {
+			    var seconds = Math.floor((Math.floor(new Date().getTime()) - (time * 1000)) / 1000);
+
+			    var interval = Math.floor(seconds / 31536000);
+			    if (interval >= 1) {
+			        return pluralize("year", interval, true);
+			    }
+			    interval = Math.floor(seconds / 2592000);
+			    if (interval >= 1) {
+			        return pluralize("month", interval, true);
+			    }
+			    interval = Math.floor(seconds / 86400);
+			    if (interval >= 1) {
+			        return pluralize("day", interval, true);
+			    }
+			    interval = Math.floor(seconds / 3600);
+			    if (interval >= 1) {
+			        return pluralize("hour", interval, true);
+			    }
+			    interval = Math.floor(seconds / 60);
+			    if (interval >= 1) {
+			        return pluralize("minute", interval, true);
+			    }
+			    return pluralize("second", Math.floor(seconds), true);
+			}
+
+
+			function sortByKey(array, key) {
+				return array.sort(function(a, b) {
+				    var x = a[key]; var y = b[key];
+				    return ((x > y) ? -1 : ((x < y) ? 1 : 0));
+				});
+			}
+
+			var pusher = new Pusher('e291df6c9c9b74e6d090', {
+		        cluster: 'eu',
+		        forceTLS: true
+		    });
+		    var channel = pusher.subscribe('FaceDetector');
+
+		    var card = `<div class="card">
+							<div class="card-body">
+								<h2 class="float-left ml-5">{}</h2>
+								<h2 class="float-left ml-5 text-secondary">{}</h2>
+								<h5 class="float-right text-secondary position-absolute mt-sm-3" style="bottom: 0.2em; right: 0.4em;">{} ago</h4>
+							</div>
+						</div>`;
+
+		    channel.bind("motion", function(data){
+		    	let post = data['faces'] == 1 ? "" : "s";
+		    	let number = data['faces'] == 0 ? "No" : data['faces'];
+		    	$("#updates").removeClass("text-secondary").addClass("text-primary");
+		    	$("#updates").html("Sensor Active<br><br>{} face{} detected".format(number, post));
+		    });
+		    channel.bind("idle", function(data){
+		    	$("#updates").removeClass("text-primary").addClass("text-secondary");
+		    	$("#updates").text("No motion detected");
+		    });
+
+			function update(){
+				$.getJSON(getBackend("get_status"), function(data){
+					let is_running = data['running'];
+					let text = is_running ? "Service is Running" : "Service is Down";
+					let style = is_running ? "text-success" : "text-danger";
+					$("#status").text(text);
+					$("#status").removeClass("text-success text-danger");
+					$("#status").addClass(style);
+					if(is_running && $("#mode").hasClass("d-none")){
+						$("#mode").removeClass("d-none");
+					} else if(!is_running && !$("#mode").hasClass("d-none")) {
+						$("#mode").addClass("d-none");
+					}
+				});
+				$.getJSON(getBackend("get_mode"), function(data){
+					$("#mode").text("Running in {} mode".format(data['mode']));
+				});
+				$.getJSON(getBackend("get_history"), function(data){
+					$("#recent-events").empty();
+					data = sortByKey(data, "time");
+					for(event of data){
+						let name = event["label"];
+						let time = timeSince(event["time"]);
+						let i = data.indexOf(event);
+						let slice = data.slice(i + 1);
+						let keys = slice.map(function(e){ return e['label']; });
+						let action = keys.includes(name) ? "passed by the sensor" : "entered the office";
+						$("#recent-events").append(card.format(name.capitalize(), action, time))
+					}
+				});
+			}
+
+			function getBackend(extension){
+				return "http://192.168.30.109:5000/" + extension;
+			}
+		</script>
+		<div class="jumbotron text-center">
+			<h1 id="status"></h1>
+			<h2 class="text-secondary" id="mode"></h2>
+		</div>
+
+		<div class="container-fluid mt-5">
+			<div class="row mx-auto d-block">
+				<h2 class="text-center" id="updates"></h2>
+			</div>
+			<div class="row mx-auto d-block mt-5" style="width: 50%;">
+				<div class="rounded-top border">
+					<h2 class="text-center">Recent Events</h2>
+				</div>
+				<div class="rounded-bottom border-left border-right border-bottom" id="recent-events">
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
