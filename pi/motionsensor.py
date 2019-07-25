@@ -1,5 +1,6 @@
 from gpiozero import MotionSensor
 from picamera import PiCamera
+from RPLCD.i2c import CharLCD
 from picamera.array import PiRGBArray
 from dotenv import load_dotenv
 from datetime import datetime
@@ -10,6 +11,7 @@ import os
 import base64
 import requests
 import json
+import atexit
 
 import numpy as np
 import cv2
@@ -51,6 +53,56 @@ camera.shutter_speed = 10000
 camera.rotation = 180
 raw_cap = PiRGBArray(camera)
 
+# Register the LCD
+lcd = CharLCD('PCF8574', 0x27)
+# Create some custom chars
+smiley = (
+	0b00000,
+    0b01010,
+    0b01010,
+    0b00000,
+    0b10001,
+    0b10001,
+    0b01110,
+    0b00000,
+)
+smiley_open = (
+	0b00000,
+    0b01010,
+    0b01010,
+    0b00000,
+    0b11111,
+    0b10001,
+    0b01110,
+    0b00000,
+)
+waiting = (
+	0b00000,
+    0b11011,
+    0b00000,
+    0b00000,
+    0b00000,
+    0b01110,
+    0b00000,
+    0b00000,
+)
+lcd.create_char(0, smiley)
+lcd.create_char(1, smiley_open)
+lcd.create_char(2, waiting)
+
+# Make sure that the LCD will be cleared on exit
+
+def close_lcd():
+	lcd.close(clear=True)
+
+atexit.register(close_lcd)
+
+
+def write_to_lcd(string):
+	lcd.clear()
+	lcd.write_string(string)
+
+
 def add_to_json(timestamp, label):
 	if not os.path.exists("history.json"):
 		file = open("history.json", "w+")
@@ -74,6 +126,7 @@ def add_to_json(timestamp, label):
 		js.append(new_js)
 		json.dump(js, file)
 
+
 # Keep checking for motion
 triggered = False
 while True:
@@ -96,6 +149,8 @@ while True:
 
 		print("{} faces detected".format(len(images)))
 		sys.stdout.flush()
+		if mode != "label":
+			write_to_lcd("I can see\n\r{} faces".format(len(images)))
 
 		# Upload all detected faces to S3
 		for i, data in enumerate(images):
@@ -118,6 +173,7 @@ while True:
 				print("I can see {}".format(label))
 				if label != "non-human":
 					add_to_json(time.time(), label)
+					write_to_lcd("Hello,\n\r{} \x01".format(label.capitalize()))
 			else:
 				raise ValueError("'{}' is not a valid operation mode".format(mode))
 
@@ -129,6 +185,7 @@ while True:
 	else:
 		print("Sensor is inactive")
 		sys.stdout.flush()
+		write_to_lcd("Waiting...\n\r\x02")
 		# On no motion detected, reset the flag
 		triggered = False
 

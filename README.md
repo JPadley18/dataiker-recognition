@@ -8,7 +8,7 @@ This guide will walk you through all the neccessary steps to set up your own ins
 
 ### The Hardware
 
-This project uses a [Raspberry Pi 4 Model B](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) (for ours, we used the 2GB model) with the [Raspberry Pi Camera Module V2](https://www.raspberrypi.org/products/camera-module-v2/) and a [HC-SR501 PIR Motion Sensor](https://thepihut.com/products/pir-infrared-motion-sensor-hc-sr501).
+This project uses a [Raspberry Pi 4 Model B](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) (for ours, we used the 2GB model) with the [Raspberry Pi Camera Module V2](https://www.raspberrypi.org/products/camera-module-v2/), [16x2 LCD I2C Display](https://thepihut.com/products/i2c-16x2-arduino-lcd-display-module?variant=27740631761&currency=GBP&gclid=EAIaIQobChMIloab3JvQ4wIVxLTtCh26tgq5EAQYAyABEgIILvD_BwE) and a [HC-SR501 PIR Motion Sensor](https://thepihut.com/products/pir-infrared-motion-sensor-hc-sr501).
 
 You may also want to purchase a [MicroSD Card with NOOBS pre-installed](https://thepihut.com/collections/raspberry-pi-sd-cards-and-adapters/products/noobs-preinstalled-sd-card). If you would rather buy a blank SD Card, follow [this guide](https://www.raspberrypi.org/documentation/installation/noobs.md) on how to set it up yourself.
 
@@ -24,7 +24,7 @@ Now that the Pi is up and running, you will need to connect the Camera and Motio
 
 #### Setting Up the PIR
 
-In order to set up the PIR, you will need three Female-to-Female jumper connectors. Looking at the bottom of the sensor module, the pins may or may not be labelled. In the case that they are labelled, you should see VCC, OUT and GND. In case they aren't labelled, the VCC will be the pin next to the Protection Diode. Check the diagram below to help you find the diode:
+In order to set up these next components, you will need seven Female-to-Female jumper connectors. Looking at the bottom of the sensor module, the pins may or may not be labelled. In the case that they are labelled, you should see VCC, OUT and GND. In case they aren't labelled, the VCC will be the pin next to the Protection Diode. Check the diagram below to help you find the diode:
 
 ![Wiring Diagram](https://lastminuteengineers.com/wp-content/uploads/2018/06/PIR-Sensor-Pinout-with-Jumper-Setting-Sensitivity-Time-Adjustment-BISS0001-IC-Labeling-Diagram.png)
 
@@ -32,7 +32,11 @@ Now that you know which pins are which, you will need to connect them to the GPI
 
 ![Pi GPIO Diagram](https://img.purch.com/gpio-pi4-final-png/w/755/aHR0cDovL21lZGlhLmJlc3RvZm1pY3JvLmNvbS9VL00vODQzNTAyL29yaWdpbmFsL0dQSU8tUGk0LUZpbmFsLnBuZw==)
 
-Connect VCC to pin 2, OUT to pin 11 and GND to pin 6. Now you can power the Pi back on.
+Connect VCC to pin 2, OUT to pin 11 and GND to pin 6.
+
+Likewise, for the LCD Display, connect VCC to pin 4, GND to pin 39, SDA to pin 3 and SCL to pin 4.
+
+Now you can power the Pi back on.
 
 Once you have connected the components, run `camera_test.py` to test the camera. A five-second preview from the camera should appear. Next, run `pir_test.py` to test the motion sensor. You should see a feed of messages either reading `No Motion Detected` or `Motion Detected`. These messages should change accordingly when there is motion near the sensor. If the feed does not change, try adjusting the sensitivity potentiometer with a screwdriver on the side of the module. Once the sensor is working, you can power the Pi on again.
 
@@ -53,7 +57,7 @@ Now you will need to set up your AWS credentials and other core project settings
 | `MODEL_ENDPOINT` | The address of the DSS API node endpoint that the machine learning model will be deployed on. You can add this later once you have trained and deployed the model. |
 | `RUN_MODE`       | The mode to run the program in. `upload` will upload images of faces to the S3 bucket for later labelling, and `label` will use `MODEL_ENDPOINT` to attempt to recognise faces that it sees. Until you have set up a trained model, this should be set to `upload`. |
 
-Now run `sudo reboot` to reboot the Pi. Once the Pi has booted, the Facial Recognition software should be running. You can use a web browser to look at a live feed from the motion camera at `[Raspberry Pi local IP]:5000`. Any faces that are detected will be sent into the S3 Bucket under the specified directory. Now you will need to set up a webapp to label them.
+Now run `sudo reboot` to reboot the Pi. Once the Pi has booted, the Facial Recognition software should be running. Any information from the program will be displayed on the LCD. You can use a web browser to look at a live feed from the motion camera at `[Raspberry Pi local IP]:5000`. Any faces that are detected will be sent into the S3 Bucket under the specified directory. Now you will need to set up a webapp to label them.
 
 ### DSS Webapp
 
