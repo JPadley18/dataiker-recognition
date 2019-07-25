@@ -57,4 +57,4 @@ Now run `sudo reboot` to reboot the Pi. Once the Pi has booted, the Facial Recog
 
 ### DSS Webapp
 
-You will first need to create a new DSS project.
+The DSS webapp is a simple UI which will display a random unlabelled image from the bucket. You just need to either give it the name of the person it shows or click the `This is not a face` button if the camera captures an image that is not a face. You can press enter as a shortcut for submitting a label and the spacebar as a shortcut for the `This is not a face` button. For this reason, you **cannot** include spaces in names.
