@@ -42,11 +42,6 @@ session = boto3.Session(
 )
 s3 = session.resource('s3')
 
-CHANNEL = "FaceDetector"
-MSG_MOTION = "motion"
-MSG_RECOG = "recognised"
-MSG_IDLE = "idle"
-
 # Register motion sensor
 sensor = MotionSensor(17)
 # Register  and setup the camera
