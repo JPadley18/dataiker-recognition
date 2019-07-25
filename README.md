@@ -53,9 +53,8 @@ Now you will need to set up your AWS credentials and other core project settings
 | `MODEL_ENDPOINT` | The address of the DSS API node endpoint that the machine learning model will be deployed on. You can add this later once you have trained and deployed the model. |
 | `RUN_MODE`       | The mode to run the program in. `upload` will upload images of faces to the S3 bucket for later labelling, and `label` will use `MODEL_ENDPOINT` to attempt to recognise faces that it sees. Until you have set up a trained model, this should be set to `upload`. |
 
-Now run `sudo reboot` to reboot the Pi. Once the Pi has booted, the Facial Recognition software should be running. Any faces that are detected will be sent into the S3 Bucket under the specified directory. Now you will need to set up a webapp to label them.
+Now run `sudo reboot` to reboot the Pi. Once the Pi has booted, the Facial Recognition software should be running. You can use a web browser to look at a live feed from the motion camera at `[Raspberry Pi local IP]:5000`. Any faces that are detected will be sent into the S3 Bucket under the specified directory. Now you will need to set up a webapp to label them.
 
 ### DSS Webapp
 
 You will first need to create a new DSS project.
-
