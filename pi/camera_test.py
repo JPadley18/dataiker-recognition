@@ -1,4 +1,4 @@
-from picamera import picamera
+from picamera import PiCamera
 import time
 
 cam = PiCamera()
