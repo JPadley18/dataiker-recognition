@@ -27,7 +27,7 @@ BUCKET_NAME = os.getenv("BUCKET_NAME")
 DIRECTORY_ROOT = os.getenv("DIRECTORY_ROOT")
 
 # Machine Learning API backend
-AI_ENDPOINT = os.getenv("MODEL_ENDPOINT")
+COORDINATOR_ENDPOINT = os.getenv("COORDINATOR_ENDPOINT")
 
 # Load the operation mode
 mode = os.getenv("RUN_MODE")
@@ -78,11 +78,11 @@ smiley_open = (
 )
 waiting = (
 	0b00000,
-    0b11011,
+    0b01010,
     0b00000,
     0b00000,
     0b00000,
-    0b01110,
+    0b11111,
     0b00000,
     0b00000,
 )
@@ -150,7 +150,8 @@ while True:
 		print("{} faces detected".format(len(images)))
 		sys.stdout.flush()
 		if mode != "label":
-			write_to_lcd("I can see\n\r{} faces".format(len(images)))
+			post = "s" if len(images) != 1 else ""
+			write_to_lcd("I can see\n\r{} face{}".format(len(images), post))
 
 		# Upload all detected faces to S3
 		for i, data in enumerate(images):
@@ -161,6 +162,8 @@ while True:
 				encoded = cv2.imencode('.jpg', data)[1].tostring()
 				s3.Bucket(BUCKET_NAME).put_object(Key=DIRECTORY_ROOT + filename, Body=encoded)
 			elif mode == "label":
+				write_to_lcd("Scanning Face...")
+				# Encode the image into Base64
 				encoded = base64.b64encode(cv2.imencode('.jpg', data)[1].tostring()).decode("utf-8")
 				data = {
 					"features": {
@@ -168,12 +171,12 @@ while True:
 					}
 				}
 
-				response = requests.post(AI_ENDPOINT, data=json.dumps(data))
-				label = list(response.json()['response'].keys())[0]
-				print("I can see {}".format(label))
+				response = requests.post(COORDINATOR_ENDPOINT, data=json.dumps(data))
+				label = response.json()['response']
 				if label != "non-human":
-					add_to_json(time.time(), label)
+					print("I can see {}".format(label))
 					write_to_lcd("Hello,\n\r{} \x01".format(label.capitalize()))
+					add_to_json(time.time(), label)
 			else:
 				raise ValueError("'{}' is not a valid operation mode".format(mode))
 
