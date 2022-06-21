@@ -4,7 +4,7 @@ colorzero==1.1
 docutils==0.14
 gpiozero==1.5.1
 jmespath==0.9.4
-numpy==1.16.4
+numpy==1.22.0
 picamera==1.13
 pkg-resources==0.0.0
 python-dateutil==2.8.0
